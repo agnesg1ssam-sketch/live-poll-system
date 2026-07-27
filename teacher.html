@@ -58,7 +58,7 @@
         </div>
 
         <div class="field-group">
-          <label>학생을 비판하는 댓글 4개</label>
+          <label>첫 번째 댓글 묶음</label>
           <textarea class="student-comment-input" rows="2" placeholder="댓글 1"></textarea>
           <textarea class="student-comment-input" rows="2" placeholder="댓글 2"></textarea>
           <textarea class="student-comment-input" rows="2" placeholder="댓글 3"></textarea>
@@ -66,11 +66,12 @@
         </div>
 
         <div class="field-group">
-          <label>학부모를 비판하는 댓글 4개</label>
+          <label>두 번째 댓글 묶음</label>
           <textarea class="parent-comment-input" rows="2" placeholder="댓글 1"></textarea>
           <textarea class="parent-comment-input" rows="2" placeholder="댓글 2"></textarea>
           <textarea class="parent-comment-input" rows="2" placeholder="댓글 3"></textarea>
           <textarea class="parent-comment-input" rows="2" placeholder="댓글 4"></textarea>
+          <small>학생 화면에는 비판 대상이 표시되지 않고 ‘댓글 읽기’로만 나타납니다.</small>
         </div>
 
         <div class="field-group">
@@ -159,9 +160,12 @@
           <button id="hideResultsButton" class="secondary-button" type="button" disabled>
             결과 숨기기
           </button>
-          <button id="openChatButton" class="success-button" type="button" disabled>채팅 열기</button>
-          <button id="closeChatButton" class="danger-button" type="button" disabled>채팅 닫기</button>
-          <button id="clearChatButton" class="secondary-button" type="button" disabled>채팅 내용 지우기</button>
+          <button id="chatControlButton" class="success-button" type="button" disabled>
+            💬 의견 나누기 시작
+          </button>
+          <button id="clearChatButton" class="secondary-button" type="button" disabled>
+            채팅 내용 지우기
+          </button>
         </div>
       </section>
 
@@ -214,6 +218,10 @@
             <span>채팅 의견</span>
             <strong id="chatMessageCount">0개</strong>
           </div>
+          <div class="response-count-card">
+            <span>평균 만족도</span>
+            <strong id="satisfactionAverage">-</strong>
+          </div>
         </div>
       </section>
 
@@ -226,11 +234,36 @@
           <span class="privacy-chip">개별 응답 비공개</span>
         </div>
 
+        <div class="display-mode-box">
+          <strong>결과 표시 방식</strong>
+          <div class="display-mode-buttons">
+            <button id="teacherOnlyModeButton" class="secondary-button compact-button" type="button">교사용</button>
+            <button id="studentOnlyModeButton" class="secondary-button compact-button" type="button">학생용 공개</button>
+            <button id="bothModeButton" class="primary-button compact-button" type="button">동시 보기</button>
+          </div>
+        </div>
+
         <div class="chart-container teacher-chart-container">
           <canvas id="teacherResultChart" aria-label="투표 결과 막대그래프"></canvas>
         </div>
 
         <div id="resultTable" class="result-table"></div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-heading-row">
+          <div>
+            <p class="eyebrow">토론 진행</p>
+            <h2>소개할 의견 선택</h2>
+          </div>
+          <button id="hideFeaturedCommentButton" class="secondary-button compact-button" type="button">
+            대표 의견 숨기기
+          </button>
+        </div>
+        <p class="panel-help">학생 채팅 중 하나를 선택하면 모든 학생 화면에 크게 표시됩니다.</p>
+        <div id="featuredCommentList" class="featured-comment-list">
+          <p class="empty-admin-state">채팅 의견이 아직 없습니다.</p>
+        </div>
       </section>
 
       <section class="admin-panel">

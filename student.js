@@ -63,6 +63,10 @@ const progressText = document.getElementById("progressText");
 const studentIdentity = document.getElementById("studentIdentity");
 const studentClassCode = document.getElementById("studentClassCode");
 const studentNickname = document.getElementById("studentNickname");
+const featuredCommentOverlay = document.getElementById("featuredCommentOverlay");
+const featuredNickname = document.getElementById("featuredNickname");
+const featuredText = document.getElementById("featuredText");
+const closeFeaturedComment = document.getElementById("closeFeaturedComment");
 
 /* ------------------------------------------------------------
    기기 식별값
@@ -301,6 +305,7 @@ function subscribeToClass() {
 
       currentClassData = snapshot.val();
       renderCurrentStep();
+      renderFeaturedComment();
     },
     (error) => {
       console.error(error);
@@ -328,6 +333,24 @@ function getCommentSet(settings, position) {
     ? settings.parentComments || []
     : settings.studentComments || [];
 }
+
+
+function renderFeaturedComment() {
+  const featured = currentClassData?.settings?.featuredComment;
+
+  if (!featured?.text) {
+    featuredCommentOverlay.classList.add("hidden");
+    return;
+  }
+
+  featuredNickname.textContent = featured.nickname || "익명";
+  featuredText.textContent = featured.text;
+  featuredCommentOverlay.classList.remove("hidden");
+}
+
+closeFeaturedComment.addEventListener("click", () => {
+  featuredCommentOverlay.classList.add("hidden");
+});
 
 function renderCurrentStep() {
   const settings = currentClassData?.settings || {};
@@ -737,7 +760,8 @@ function countVotes(voteObject, labels) {
 }
 
 function renderComparisonScreen(settings) {
-  if (settings.resultsVisible !== true) {
+  const displayMode = settings.resultDisplayMode || "both";
+  if (settings.resultsVisible !== true || displayMode === "teacher") {
     studentApp.innerHTML = `
       <div class="centered-content">
         <span class="step-kicker">11단계 · 결과 비교</span>
@@ -961,6 +985,17 @@ function renderReflectionComplete() {
       <p>나의 판단이 어떤 정보의 영향을 받았는지 기억해 주세요.</p>
     </div>
 
+    <section id="satisfactionSection">
+      <h2>오늘 수업 만족도</h2>
+      <p>별점을 선택해 주세요.</p>
+      <div class="rating-row" role="radiogroup" aria-label="수업 만족도">
+        ${[1,2,3,4,5].map((score) => `
+          <button class="rating-button" type="button" data-score="${score}" aria-label="${score}점">⭐</button>
+        `).join("")}
+      </div>
+      <p id="ratingMessage" class="teacher-wait-note"></p>
+    </section>
+
     <div class="education-guide">
       <article>
         “이번 활동에서는 댓글이 판단에 미치는 영향을 알아보기 위해
@@ -973,6 +1008,32 @@ function renderReflectionComplete() {
       </article>
     </div>
   `;
+
+  document.querySelectorAll(".rating-button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const score = Number(button.dataset.score);
+
+      document.querySelectorAll(".rating-button").forEach((item) => {
+        item.classList.toggle(
+          "selected",
+          Number(item.dataset.score) <= score
+        );
+      });
+
+      try {
+        await set(ref(db, `classes/${classCode}/satisfaction/${deviceId}`), {
+          score,
+          submittedAt: Date.now()
+        });
+        document.getElementById("ratingMessage").textContent =
+          `${score}점으로 제출되었습니다.`;
+      } catch (error) {
+        console.error(error);
+        document.getElementById("ratingMessage").textContent =
+          "별점을 저장하지 못했습니다.";
+      }
+    });
+  });
 }
 
 /* ------------------------------------------------------------

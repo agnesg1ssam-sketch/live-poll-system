@@ -101,8 +101,7 @@ const openVoteButton = document.getElementById("openVoteButton");
 const closeVoteButton = document.getElementById("closeVoteButton");
 const showResultsButton = document.getElementById("showResultsButton");
 const hideResultsButton = document.getElementById("hideResultsButton");
-const openChatButton = document.getElementById("openChatButton");
-const closeChatButton = document.getElementById("closeChatButton");
+const chatControlButton = document.getElementById("chatControlButton");
 const clearChatButton = document.getElementById("clearChatButton");
 const chatMessageCount = document.getElementById("chatMessageCount");
 const refreshResultsButton = document.getElementById("refreshResultsButton");
@@ -121,6 +120,12 @@ const studentList = document.getElementById("studentList");
 const keywordSummary = document.getElementById("keywordSummary");
 const wordCloud = document.getElementById("wordCloud");
 const analysisMessageCount = document.getElementById("analysisMessageCount");
+const featuredCommentList = document.getElementById("featuredCommentList");
+const hideFeaturedCommentButton = document.getElementById("hideFeaturedCommentButton");
+const satisfactionAverage = document.getElementById("satisfactionAverage");
+const teacherOnlyModeButton = document.getElementById("teacherOnlyModeButton");
+const studentOnlyModeButton = document.getElementById("studentOnlyModeButton");
+const bothModeButton = document.getElementById("bothModeButton");
 const teacherToast = document.getElementById("teacherToast");
 
 let currentClassCode = localStorage.getItem("teacherClassCode") || "";
@@ -220,6 +225,8 @@ async function createNewClass() {
         youtubeId: "",
         commentOrder: "studentFirst",
         resolvedCommentOrder: "studentFirst",
+        resultDisplayMode: "both",
+        featuredComment: null,
         createdAt: serverTimestamp()
       }
     };
@@ -488,8 +495,13 @@ function renderTeacherDashboard() {
     step !== 11 || settings.resultsVisible === true;
   hideResultsButton.disabled =
     step !== 11 || settings.resultsVisible !== true;
-  openChatButton.disabled = step !== 10 || settings.chatOpen === true;
-  closeChatButton.disabled = step !== 10 || settings.chatOpen !== true;
+  chatControlButton.disabled = step !== 10;
+  chatControlButton.textContent = settings.chatOpen
+    ? "💬 의견 나누기 종료"
+    : "💬 의견 나누기 시작";
+  chatControlButton.className = settings.chatOpen
+    ? "danger-button"
+    : "success-button";
   clearChatButton.disabled = step !== 10;
   chatMessageCount.textContent = `${objectSize(currentClassData?.chat)}개`;
 
@@ -502,6 +514,9 @@ function renderTeacherDashboard() {
   renderResponseCounts();
   renderResults();
   renderChatAnalysis();
+  renderFeaturedComments();
+  renderSatisfaction();
+  updateDisplayModeButtons();
 }
 
 
@@ -515,10 +530,33 @@ function escapeAdminHtml(value = "") {
 }
 
 function renderStudentList() {
-  const students = Object.values(currentClassData?.presence || {})
-    .map((item) => item?.nickname)
-    .filter(Boolean)
-    .sort((a, b) => String(a).localeCompare(String(b), "ko"));
+  const presence = currentClassData?.presence || {};
+  const votes = currentClassData?.votes || {};
+  const chat = currentClassData?.chat || {};
+
+  const chatDeviceIds = new Set(
+    Object.values(chat).map((item) => item?.deviceId).filter(Boolean)
+  );
+
+  const students = Object.entries(presence)
+    .map(([deviceId, item]) => {
+      const vote3Done = Boolean(votes.vote3?.[deviceId]);
+      const finalDone = Boolean(votes.final?.[deviceId]);
+      const chatting = chatDeviceIds.has(deviceId);
+
+      let status = "참여 중";
+      if (finalDone) status = "최종 투표 완료";
+      else if (chatting) status = "채팅 참여";
+      else if (vote3Done) status = "3차 투표 완료";
+      else if (votes.vote2?.[deviceId]) status = "2차 투표 완료";
+      else if (votes.vote1?.[deviceId]) status = "1차 투표 완료";
+
+      return {
+        nickname: item?.nickname || "별명 없음",
+        status
+      };
+    })
+    .sort((a, b) => a.nickname.localeCompare(b.nickname, "ko"));
 
   if (!students.length) {
     studentList.innerHTML =
@@ -526,9 +564,13 @@ function renderStudentList() {
     return;
   }
 
-  studentList.innerHTML = students
-    .map((name) => `<span class="student-chip">${escapeAdminHtml(name)}</span>`)
-    .join("");
+  studentList.innerHTML = students.map((student) => `
+    <span class="student-chip">
+      <span>
+        ${escapeAdminHtml(student.nickname)}
+        <small class="student-status-detail">${escapeAdminHtml(student.status)}</small>
+      </span>
+    </span>`).join("");
 }
 
 function analyzeChatKeywords() {
@@ -593,6 +635,103 @@ function renderChatAnalysis() {
       </span>`;
     })
     .join("");
+}
+
+
+function renderFeaturedComments() {
+  const messages = Object.entries(currentClassData?.chat || {})
+    .map(([id, value]) => ({ id, ...value }))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+  if (!messages.length) {
+    featuredCommentList.innerHTML =
+      '<p class="empty-admin-state">채팅 의견이 아직 없습니다.</p>';
+    return;
+  }
+
+  featuredCommentList.innerHTML = messages.slice(0, 50).map((message) => `
+    <article class="featured-comment-item">
+      <div>
+        <strong>${escapeAdminHtml(message.nickname || "익명")}</strong>
+        <p>${escapeAdminHtml(message.text || "")}</p>
+      </div>
+      <button class="primary-button compact-button feature-comment-button"
+        type="button"
+        data-id="${escapeAdminHtml(message.id)}">
+        학생 화면에 띄우기
+      </button>
+    </article>`).join("");
+
+  featuredCommentList.querySelectorAll(".feature-comment-button")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        const message = messages.find((item) => item.id === button.dataset.id);
+        if (!message) return;
+
+        await update(ref(db, `classes/${currentClassCode}/settings`), {
+          featuredComment: {
+            nickname: message.nickname || "익명",
+            text: message.text || "",
+            shownAt: Date.now()
+          }
+        });
+
+        showToast("선택한 의견을 학생 화면에 표시했습니다.");
+      });
+    });
+}
+
+async function hideFeaturedComment() {
+  if (!currentClassCode) return;
+  await update(ref(db, `classes/${currentClassCode}/settings`), {
+    featuredComment: null
+  });
+  showToast("대표 의견을 숨겼습니다.");
+}
+
+function renderSatisfaction() {
+  const values = Object.values(currentClassData?.satisfaction || {})
+    .map((item) => Number(item?.score))
+    .filter((score) => score >= 1 && score <= 5);
+
+  if (!values.length) {
+    satisfactionAverage.textContent = "-";
+    return;
+  }
+
+  const average = values.reduce((sum, score) => sum + score, 0) / values.length;
+  satisfactionAverage.textContent = `${average.toFixed(1)} / 5`;
+}
+
+async function setResultDisplayMode(mode) {
+  if (!currentClassCode) return;
+
+  await update(ref(db, `classes/${currentClassCode}/settings`), {
+    resultDisplayMode: mode,
+    resultsVisible: mode !== "teacher"
+  });
+
+  showToast(
+    mode === "teacher" ? "교사 화면에서만 결과를 봅니다." :
+    mode === "student" ? "학생 화면에 결과를 공개했습니다." :
+    "교사와 학생이 함께 결과를 봅니다."
+  );
+}
+
+function updateDisplayModeButtons() {
+  const mode = currentClassData?.settings?.resultDisplayMode || "both";
+  const buttons = {
+    teacher: teacherOnlyModeButton,
+    student: studentOnlyModeButton,
+    both: bothModeButton
+  };
+
+  Object.entries(buttons).forEach(([key, button]) => {
+    button.className =
+      key === mode
+        ? "primary-button compact-button"
+        : "secondary-button compact-button";
+  });
 }
 
 function renderResponseCounts() {
@@ -774,6 +913,11 @@ async function setChatOpen(isOpen) {
   showToast(isOpen ? "학생 채팅을 열었습니다." : "학생 채팅을 닫았습니다.");
 }
 
+async function toggleChat() {
+  const isOpen = currentClassData?.settings?.chatOpen === true;
+  await setChatOpen(!isOpen);
+}
+
 async function clearChat() {
   if (!currentClassCode) return;
   if (!confirm("현재 학급의 채팅 내용을 모두 삭제하시겠습니까?")) return;
@@ -901,7 +1045,8 @@ function printClassReport() {
     <strong>뉴스 제목:</strong> ${escapeAdminHtml(settings.newsTitle || "-")}<br>
     <strong>현재 접속:</strong> ${objectSize(currentClassData.presence)}명<br>
     <strong>채팅 의견:</strong> ${analysis.messageCount}개<br>
-    <strong>성찰 제출:</strong> ${objectSize(currentClassData.reflections)}명
+    <strong>성찰 제출:</strong> ${objectSize(currentClassData.reflections)}명<br>
+    <strong>평균 만족도:</strong> ${satisfactionAverage.textContent}
   </div>
   ${voteSections}
   <section><h2>채팅 주요어</h2><p>${keywordText}</p></section>
@@ -958,9 +1103,12 @@ openVoteButton.addEventListener("click", () => setVoteOpen(true));
 closeVoteButton.addEventListener("click", () => setVoteOpen(false));
 showResultsButton.addEventListener("click", () => setResultsVisible(true));
 hideResultsButton.addEventListener("click", () => setResultsVisible(false));
-openChatButton.addEventListener("click", () => setChatOpen(true));
-closeChatButton.addEventListener("click", () => setChatOpen(false));
+chatControlButton.addEventListener("click", toggleChat);
 clearChatButton.addEventListener("click", clearChat);
+hideFeaturedCommentButton.addEventListener("click", hideFeaturedComment);
+teacherOnlyModeButton.addEventListener("click", () => setResultDisplayMode("teacher"));
+studentOnlyModeButton.addEventListener("click", () => setResultDisplayMode("student"));
+bothModeButton.addEventListener("click", () => setResultDisplayMode("both"));
 refreshResultsButton.addEventListener("click", renderResults);
 downloadCsvButton.addEventListener("click", downloadCsv);
 printReportButton.addEventListener("click", printClassReport);
