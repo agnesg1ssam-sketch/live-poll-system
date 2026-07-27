@@ -27,14 +27,13 @@ import {
 
 /* Firebase 콘솔에서 복사한 설정값을 입력하세요. */
 const firebaseConfig = {
-  apiKey: "AIzaSyCQIl_TXTSQVkyhAWR9XmWG1gRz_6KBBzU",
-  authDomain: "metalk-live.firebaseapp.com",
-  databaseURL: "https://metalk-live-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "metalk-live",
-  storageBucket: "metalk-live.firebasestorage.app",
-  messagingSenderId: "321336664704",
-  appId: "1:321336664704:web:191d36e83a08b2f4273c65",
-  measurementId: "G-03L922NC5M"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 /* Firebase 앱과 Realtime Database를 초기화합니다. */

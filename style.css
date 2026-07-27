@@ -1,5 +1,5 @@
 /* =========================================================
-   댓글에 흔들리는 나의 판단 - 공통 스타일
+   미톡 라이브 - 공통 스타일
    학생용과 교사용 화면이 같은 디자인 언어를 사용하도록 구성했습니다.
    ========================================================= */
 
@@ -1000,3 +1000,17 @@ a {
     flex-direction: column;
   }
 }
+
+.chat-guideline { display:flex; margin:18px 0; padding:14px 16px; flex-direction:column; gap:5px;
+  border-radius:14px; background:var(--purple-50); color:var(--purple-900); line-height:1.55; }
+.chat-message-list { display:grid; max-height:360px; min-height:220px; padding:14px; gap:10px;
+  overflow-y:auto; border:1px solid var(--line); border-radius:16px; background:#f8f7fa; }
+.chat-message { padding:13px 15px; border-radius:14px; background:#fff;
+  box-shadow:0 5px 14px rgba(36,27,47,.05); }
+.chat-message strong { color:var(--purple-700); font-size:.9rem; }
+.chat-message p { margin:5px 0 0; color:var(--ink-900); line-height:1.55; white-space:pre-wrap; word-break:break-word; }
+.chat-empty { margin:auto; color:var(--ink-500); text-align:center; }
+.chat-form { display:grid; margin-top:14px; gap:10px; }
+.chat-form textarea { width:100%; padding:14px; border:1px solid #d9cfdf; border-radius:13px; resize:vertical; }
+.chat-form-footer { display:flex; align-items:center; justify-content:space-between; gap:14px;
+  color:var(--ink-500); font-size:.86rem; }

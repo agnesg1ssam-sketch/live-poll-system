@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="댓글에 흔들리는 나의 판단 교사용 관리 화면" />
-  <title>교사용 관리 | 댓글에 흔들리는 나의 판단</title>
+  <meta name="description" content="미톡 라이브 교사용 관리 화면" />
+  <title>교사용 관리 | 미톡 라이브</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="teacher-page">
   <header class="teacher-topbar">
     <div>
       <p class="eyebrow">교사용 관리 패널</p>
-      <h1>댓글에 흔들리는 나의 판단</h1>
+      <h1>미톡 라이브</h1>
     </div>
     <a class="secondary-button compact-button" href="index.html">첫 화면</a>
   </header>
@@ -149,6 +149,9 @@
           <button id="hideResultsButton" class="secondary-button" type="button" disabled>
             결과 숨기기
           </button>
+          <button id="openChatButton" class="success-button" type="button" disabled>채팅 열기</button>
+          <button id="closeChatButton" class="danger-button" type="button" disabled>채팅 닫기</button>
+          <button id="clearChatButton" class="secondary-button" type="button" disabled>채팅 내용 지우기</button>
         </div>
       </section>
 
@@ -183,6 +186,10 @@
           <div class="response-count-card">
             <span>성찰 제출</span>
             <strong id="reflectionCount">0명</strong>
+          </div>
+          <div class="response-count-card">
+            <span>채팅 의견</span>
+            <strong id="chatMessageCount">0개</strong>
           </div>
         </div>
       </section>

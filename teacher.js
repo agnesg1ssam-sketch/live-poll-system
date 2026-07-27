@@ -27,81 +27,30 @@ import {
    단계 정보
    ------------------------------------------------------------ */
 
-const TOTAL_STEPS = 13;
+const TOTAL_STEPS = 14;
 
 const STEP_INFO = {
-  1: {
-    title: "학생 입장 대기",
-    description:
-      "학생들이 학급 코드와 별명을 입력해 참여합니다. 접속 학생 수를 확인한 뒤 다음 단계로 이동하세요."
-  },
-  2: {
-    title: "뉴스 제목 공개",
-    description:
-      "학생 화면에는 뉴스 제목만 표시됩니다. 댓글이나 영상은 아직 보여주지 않습니다."
-  },
-  3: {
-    title: "1차 투표",
-    description:
-      "제목만 본 상태에서 누가 가장 문제라고 생각하는지 투표합니다."
-  },
-  4: {
-    title: "1차 투표 후 대기",
-    description:
-      "학생들이 다음 자료를 보기 전 잠시 기다리는 단계입니다."
-  },
-  5: {
-    title: "학생 비판 댓글 공개",
-    description:
-      "학생을 비판하는 댓글 4개를 학생 화면에 보여줍니다."
-  },
-  6: {
-    title: "2차 투표",
-    description:
-      "학생 비판 댓글을 읽은 뒤 판단이 달라졌는지 투표합니다."
-  },
-  7: {
-    title: "2차 투표 후 대기",
-    description:
-      "학부모 비판 댓글을 공개하기 전 학생들이 기다리는 단계입니다."
-  },
-  8: {
-    title: "학부모 비판 댓글 공개",
-    description:
-      "학부모를 비판하는 댓글 4개를 학생 화면에 보여줍니다."
-  },
-  9: {
-    title: "3차 투표",
-    description:
-      "학부모 비판 댓글을 읽은 뒤 다시 판단을 투표합니다."
-  },
-  10: {
-    title: "1·2·3차 결과 비교",
-    description:
-      "세 차례 투표를 그룹 막대그래프로 비교합니다. 결과 공개 버튼을 눌러야 학생에게 보입니다."
-  },
-  11: {
-    title: "뉴스 영상 시청",
-    description:
-      "설정한 유튜브 뉴스 영상을 학생 화면에 보여줍니다."
-  },
-  12: {
-    title: "최종 투표",
-    description:
-      "뉴스 전체를 본 뒤 최종 판단을 투표합니다."
-  },
-  13: {
-    title: "성찰 활동",
-    description:
-      "학생들이 생각이 바뀐 횟수와 이유, 댓글의 성격, 앞으로 확인할 점을 작성합니다."
-  }
+  1: { title: "학생 입장 대기", description: "학생들이 학급 코드와 별명을 입력해 참여합니다." },
+  2: { title: "뉴스 제목 공개", description: "학생 화면에는 뉴스 제목만 표시됩니다." },
+  3: { title: "1차 투표", description: "제목만 본 상태에서 첫 판단을 투표합니다." },
+  4: { title: "1차 투표 후 대기", description: "다음 자료를 보기 전 잠시 기다립니다." },
+  5: { title: "첫 번째 댓글 공개", description: "첫 번째 댓글 묶음을 학생 화면에 보여줍니다." },
+  6: { title: "2차 투표", description: "댓글을 읽은 뒤 판단을 다시 투표합니다." },
+  7: { title: "2차 투표 후 대기", description: "두 번째 댓글 공개 전 대기합니다." },
+  8: { title: "두 번째 댓글 공개", description: "두 번째 댓글 묶음을 학생 화면에 보여줍니다." },
+  9: { title: "3차 투표", description: "두 번째 댓글을 읽은 뒤 다시 판단을 투표합니다." },
+  10: { title: "실시간 의견 나눔", description: "3차 투표를 마감한 뒤 학생 채팅을 열어 생각과 이유를 나눕니다." },
+  11: { title: "1·2·3차 결과 비교", description: "세 차례 투표를 그룹 막대그래프로 비교합니다." },
+  12: { title: "뉴스 영상 시청", description: "유튜브 뉴스 영상을 학생 화면에 보여줍니다." },
+  13: { title: "최종 투표", description: "뉴스 전체를 본 뒤 최종 판단을 투표합니다." },
+  14: { title: "성찰 활동", description: "학생들이 판단 변화 과정을 돌아봅니다." }
 };
 
 const VOTE_STEP_KEY = {
   3: "vote1",
   6: "vote2",
   9: "vote3",
-  12: "final"
+  13: "final"
 };
 
 const VOTE_LABELS = {
@@ -151,6 +100,10 @@ const openVoteButton = document.getElementById("openVoteButton");
 const closeVoteButton = document.getElementById("closeVoteButton");
 const showResultsButton = document.getElementById("showResultsButton");
 const hideResultsButton = document.getElementById("hideResultsButton");
+const openChatButton = document.getElementById("openChatButton");
+const closeChatButton = document.getElementById("closeChatButton");
+const clearChatButton = document.getElementById("clearChatButton");
+const chatMessageCount = document.getElementById("chatMessageCount");
 const refreshResultsButton = document.getElementById("refreshResultsButton");
 
 const vote1Count = document.getElementById("vote1Count");
@@ -254,6 +207,7 @@ async function createNewClass() {
         currentStep: 1,
         voteOpen: false,
         resultsVisible: false,
+        chatOpen: false,
         newsTitle: "",
         studentComments: ["", "", "", ""],
         parentComments: ["", "", "", ""],
@@ -432,6 +386,7 @@ async function changeStep(direction) {
     await update(ref(db, `classes/${currentClassCode}/settings`), {
       currentStep: nextStep,
       voteOpen: false,
+      chatOpen: false,
       resultsVisible:
         nextStep === 10
           ? currentClassData.settings?.resultsVisible === true
@@ -512,9 +467,13 @@ function renderTeacherDashboard() {
   closeVoteButton.disabled = !isVoteStep(step) || settings.voteOpen !== true;
 
   showResultsButton.disabled =
-    step !== 10 || settings.resultsVisible === true;
+    step !== 11 || settings.resultsVisible === true;
   hideResultsButton.disabled =
-    step !== 10 || settings.resultsVisible !== true;
+    step !== 11 || settings.resultsVisible !== true;
+  openChatButton.disabled = step !== 10 || settings.chatOpen === true;
+  closeChatButton.disabled = step !== 10 || settings.chatOpen !== true;
+  clearChatButton.disabled = step !== 10;
+  chatMessageCount.textContent = `${objectSize(currentClassData?.chat)}개`;
 
   downloadCsvButton.disabled = false;
   resetVotesButton.disabled = false;
@@ -545,7 +504,7 @@ function renderResults() {
   let datasets = [];
   let tableHtml = "";
 
-  if (step === 10) {
+  if (step === 11) {
     labels = VOTE_LABELS.vote1;
 
     const stageKeys = ["vote1", "vote2", "vote3"];
@@ -687,6 +646,29 @@ function buildComparisonTable(labels, datasets) {
   `;
 }
 
+/* 3차 투표 후 실시간 채팅 관리 */
+async function setChatOpen(isOpen) {
+  if (!currentClassCode || !currentClassData) return;
+  const step = Number(currentClassData.settings?.currentStep) || 1;
+
+  if (step !== 10) {
+    showToast("채팅은 의견 나눔 단계에서만 열 수 있습니다.");
+    return;
+  }
+
+  await update(ref(db, `classes/${currentClassCode}/settings`), {
+    chatOpen: isOpen
+  });
+  showToast(isOpen ? "학생 채팅을 열었습니다." : "학생 채팅을 닫았습니다.");
+}
+
+async function clearChat() {
+  if (!currentClassCode) return;
+  if (!confirm("현재 학급의 채팅 내용을 모두 삭제하시겠습니까?")) return;
+  await remove(ref(db, `classes/${currentClassCode}/chat`));
+  showToast("채팅 내용을 모두 삭제했습니다.");
+}
+
 /* ------------------------------------------------------------
    CSV 저장
    ------------------------------------------------------------ */
@@ -764,6 +746,7 @@ async function resetVotes() {
     await Promise.all([
       remove(ref(db, `classes/${currentClassCode}/votes`)),
       remove(ref(db, `classes/${currentClassCode}/reflections`)),
+      remove(ref(db, `classes/${currentClassCode}/chat`)),
       update(ref(db, `classes/${currentClassCode}/settings`), {
         currentStep: 1,
         voteOpen: false,
@@ -792,6 +775,9 @@ openVoteButton.addEventListener("click", () => setVoteOpen(true));
 closeVoteButton.addEventListener("click", () => setVoteOpen(false));
 showResultsButton.addEventListener("click", () => setResultsVisible(true));
 hideResultsButton.addEventListener("click", () => setResultsVisible(false));
+openChatButton.addEventListener("click", () => setChatOpen(true));
+closeChatButton.addEventListener("click", () => setChatOpen(false));
+clearChatButton.addEventListener("click", clearChat);
 refreshResultsButton.addEventListener("click", renderResults);
 downloadCsvButton.addEventListener("click", downloadCsv);
 resetVotesButton.addEventListener("click", resetVotes);

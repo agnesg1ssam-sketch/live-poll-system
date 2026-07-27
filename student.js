@@ -23,7 +23,7 @@ import {
    기본 상수와 화면 요소
    ------------------------------------------------------------ */
 
-const TOTAL_STEPS = 13;
+const TOTAL_STEPS = 14;
 
 const STEP_TITLES = {
   1: "학급 참여",
@@ -35,10 +35,11 @@ const STEP_TITLES = {
   7: "잠시 기다리기",
   8: "댓글 더 읽기",
   9: "생각 다시 선택하기",
-  10: "결과 비교하기",
-  11: "뉴스 전체 보기",
-  12: "최종 생각 선택하기",
-  13: "활동 돌아보기"
+  10: "의견 나누기",
+  11: "결과 비교하기",
+  12: "뉴스 전체 보기",
+  13: "최종 생각 선택하기",
+  14: "활동 돌아보기"
 };
 
 const VOTE_OPTIONS = {
@@ -320,55 +321,27 @@ function renderCurrentStep() {
   updateIdentity();
 
   switch (step) {
-    case 1:
-      renderWaitingForTeacherStart();
-      break;
-    case 2:
-      renderNewsTitle(settings);
-      break;
-    case 3:
-      renderVoteScreen("vote1", settings);
-      break;
-    case 4:
-      renderWaitScreen("1차 투표가 끝났습니다.");
-      break;
+    case 1: renderWaitingForTeacherStart(); break;
+    case 2: renderNewsTitle(settings); break;
+    case 3: renderVoteScreen("vote1", settings); break;
+    case 4: renderWaitScreen("1차 투표가 끝났습니다."); break;
     case 5:
-      renderCommentScreen(
-       "댓글을 읽어 보세요",
-        settings.studentComments || [],
-        "다음 댓글들을 천천히 읽고 어떤 생각이 드는지 살펴보세요."
-      );
+      renderCommentScreen("댓글을 읽어 보세요", settings.studentComments || [],
+        "다음 댓글들을 천천히 읽고 어떤 생각이 드는지 살펴보세요.");
       break;
-    case 6:
-      renderVoteScreen("vote2", settings);
-      break;
-    case 7:
-      renderWaitScreen("2차 투표가 끝났습니다.");
-      break;
+    case 6: renderVoteScreen("vote2", settings); break;
+    case 7: renderWaitScreen("2차 투표가 끝났습니다."); break;
     case 8:
-      renderCommentScreen(
-        "다른 댓글도 읽어 보세요",
-        settings.parentComments || [],
-        "이번에는 다른 댓글들을 읽고 생각이 달라지는지 살펴보세요."
-      );
+      renderCommentScreen("다른 댓글도 읽어 보세요", settings.parentComments || [],
+        "이번에는 다른 댓글들을 읽고 생각이 달라지는지 살펴보세요.");
       break;
-    case 9:
-      renderVoteScreen("vote3", settings);
-      break;
-    case 10:
-      renderComparisonScreen(settings);
-      break;
-    case 11:
-      renderVideoScreen(settings);
-      break;
-    case 12:
-      renderVoteScreen("final", settings);
-      break;
-    case 13:
-      renderReflectionScreen();
-      break;
-    default:
-      renderWaitScreen("교사가 활동을 준비하고 있습니다.");
+    case 9: renderVoteScreen("vote3", settings); break;
+    case 10: renderChatScreen(settings); break;
+    case 11: renderComparisonScreen(settings); break;
+    case 12: renderVideoScreen(settings); break;
+    case 13: renderVoteScreen("final", settings); break;
+    case 14: renderReflectionScreen(); break;
+    default: renderWaitScreen("교사가 활동을 준비하고 있습니다.");
   }
 }
 
@@ -633,8 +606,106 @@ function renderSubmittedVote(voteKey, choice) {
   `;
 }
 
+
+/* 10단계: 3차 투표 종료 후 실시간 의견 나누기 */
+let chatListenerStop = null;
+
+function renderChatScreen(settings) {
+  const chatOpen = settings.chatOpen === true;
+
+  if (!chatOpen) {
+    if (typeof chatListenerStop === "function") chatListenerStop();
+    studentApp.innerHTML = `
+      <div class="centered-content">
+        <span class="step-kicker">10단계 · 의견 나누기</span>
+        <div class="waiting-visual" aria-hidden="true">💬</div>
+        <h1>의견 나눔을 준비하고 있습니다.</h1>
+        <p>교사가 채팅을 열면 친구들의 의견을 볼 수 있습니다.</p>
+      </div>`;
+    return;
+  }
+
+  studentApp.innerHTML = `
+    <span class="step-kicker">10단계 · 의견 나누기</span>
+    <h1>친구들과 생각을 나눠 보세요.</h1>
+    <p>다른 의견을 존중하고, 사람을 공격하지 말고 생각의 이유를 이야기해 주세요.</p>
+    <div class="chat-guideline">
+      <strong>채팅 약속</strong>
+      <span>짧고 분명하게 · 이유와 근거를 함께 · 비난과 개인정보는 쓰지 않기</span>
+    </div>
+    <div id="chatMessageList" class="chat-message-list" aria-live="polite">
+      <p class="chat-empty">첫 의견을 기다리고 있습니다.</p>
+    </div>
+    <form id="chatForm" class="chat-form">
+      <textarea id="chatMessageInput" maxlength="180" rows="2"
+        placeholder="내 생각과 그 이유를 적어 보세요." required></textarea>
+      <div class="chat-form-footer">
+        <span id="chatLengthText">0 / 180</span>
+        <button class="primary-button" type="submit">의견 보내기</button>
+      </div>
+    </form>`;
+
+  const input = document.getElementById("chatMessageInput");
+  input.addEventListener("input", () => {
+    document.getElementById("chatLengthText").textContent =
+      `${input.value.length} / 180`;
+  });
+
+  document.getElementById("chatForm").addEventListener("submit", submitChatMessage);
+  subscribeToChat();
+}
+
+function subscribeToChat() {
+  if (typeof chatListenerStop === "function") chatListenerStop();
+
+  chatListenerStop = onValue(ref(db, `classes/${classCode}/chat`), (snapshot) => {
+    const list = document.getElementById("chatMessageList");
+    if (!list) return;
+
+    const messages = Object.values(snapshot.val() || {})
+      .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
+
+    if (!messages.length) {
+      list.innerHTML = `<p class="chat-empty">첫 의견을 기다리고 있습니다.</p>`;
+      return;
+    }
+
+    list.innerHTML = messages.slice(-100).map((message) => `
+      <article class="chat-message">
+        <strong>${escapeHtml(message.nickname || "익명")}</strong>
+        <p>${escapeHtml(message.text || "")}</p>
+      </article>`).join("");
+
+    list.scrollTop = list.scrollHeight;
+  });
+}
+
+async function submitChatMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById("chatMessageInput");
+  const button = event.currentTarget.querySelector("button");
+  const text = input.value.trim();
+  if (!text) return;
+
+  button.disabled = true;
+  const messageId = Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+
+  try {
+    await set(ref(db, `classes/${classCode}/chat/${messageId}`), {
+      nickname, text, deviceId, createdAt: Date.now()
+    });
+    input.value = "";
+    document.getElementById("chatLengthText").textContent = "0 / 180";
+  } catch (error) {
+    console.error(error);
+    alert("의견을 보내지 못했습니다.");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 /* ------------------------------------------------------------
-   10단계: 1·2·3차 결과 비교
+   11단계: 1·2·3차 결과 비교
    ------------------------------------------------------------ */
 
 function countVotes(voteObject, labels) {
@@ -653,7 +724,7 @@ function renderComparisonScreen(settings) {
   if (settings.resultsVisible !== true) {
     studentApp.innerHTML = `
       <div class="centered-content">
-        <span class="step-kicker">10단계 · 결과 비교</span>
+        <span class="step-kicker">11단계 · 결과 비교</span>
         <div class="waiting-visual" aria-hidden="true">📊</div>
         <h1>결과 공개를 기다리고 있습니다.</h1>
         <p>교사가 결과를 공개하면 1·2·3차 투표를 비교할 수 있습니다.</p>
@@ -669,7 +740,7 @@ function renderComparisonScreen(settings) {
   const vote3 = countVotes(votes.vote3, labels);
 
   studentApp.innerHTML = `
-    <span class="step-kicker">10단계 · 결과 비교</span>
+    <span class="step-kicker">11단계 · 결과 비교</span>
     <h1>우리 반의 판단은 어떻게 달라졌을까요?</h1>
 
     <div class="big-message">
@@ -743,7 +814,7 @@ function renderVideoScreen(settings) {
   const safeVideoId = videoId.replace(/[^a-zA-Z0-9_-]/g, "");
 
   studentApp.innerHTML = `
-    <span class="step-kicker">11단계 · 뉴스 전체 보기</span>
+    <span class="step-kicker">12단계 · 뉴스 전체 보기</span>
     <h1>이제 뉴스 영상을 확인해 봅시다.</h1>
     <p>제목과 댓글뿐 아니라 뉴스가 제공하는 전체 정보를 살펴보세요.</p>
 
@@ -793,7 +864,7 @@ async function renderReflectionScreen() {
   }
 
   studentApp.innerHTML = `
-    <span class="step-kicker">13단계 · 성찰 활동</span>
+    <span class="step-kicker">14단계 · 성찰 활동</span>
     <h1>내 판단이 어떻게 만들어졌는지 돌아봅시다.</h1>
     <p>정답을 찾는 활동이 아니라, 내 생각이 변한 과정을 살펴보는 활동입니다.</p>
 
