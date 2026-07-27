@@ -334,9 +334,9 @@ function renderCurrentStep() {
       break;
     case 5:
       renderCommentScreen(
-        "학생을 비판하는 댓글",
+       "댓글을 읽어 보세요",
         settings.studentComments || [],
-        "다음 댓글들은 학생을 문제 삼는 의견들입니다."
+        "다음 댓글들을 천천히 읽고 어떤 생각이 드는지 살펴보세요."
       );
       break;
     case 6:
@@ -347,9 +347,9 @@ function renderCurrentStep() {
       break;
     case 8:
       renderCommentScreen(
-        "학부모를 비판하는 댓글",
+        "다른 댓글도 읽어 보세요",
         settings.parentComments || [],
-        "다음 댓글들은 학부모를 문제 삼는 의견들입니다."
+        "이번에는 다른 댓글들을 읽고 생각이 달라지는지 살펴보세요."
       );
       break;
     case 9:
