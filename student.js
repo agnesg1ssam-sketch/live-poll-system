@@ -313,6 +313,22 @@ function subscribeToClass() {
    단계별 화면 렌더링
    ------------------------------------------------------------ */
 
+
+function getCommentSet(settings, position) {
+  const order = settings.resolvedCommentOrder || settings.commentOrder || "studentFirst";
+  const firstIsStudent = order !== "parentFirst";
+
+  if (position === 1) {
+    return firstIsStudent
+      ? settings.studentComments || []
+      : settings.parentComments || [];
+  }
+
+  return firstIsStudent
+    ? settings.parentComments || []
+    : settings.studentComments || [];
+}
+
 function renderCurrentStep() {
   const settings = currentClassData?.settings || {};
   const step = Number(settings.currentStep) || 1;
@@ -326,13 +342,13 @@ function renderCurrentStep() {
     case 3: renderVoteScreen("vote1", settings); break;
     case 4: renderWaitScreen("1차 투표가 끝났습니다."); break;
     case 5:
-      renderCommentScreen("댓글을 읽어 보세요", settings.studentComments || [],
+      renderCommentScreen("댓글을 읽어 보세요", getCommentSet(settings, 1),
         "다음 댓글들을 천천히 읽고 어떤 생각이 드는지 살펴보세요.");
       break;
     case 6: renderVoteScreen("vote2", settings); break;
     case 7: renderWaitScreen("2차 투표가 끝났습니다."); break;
     case 8:
-      renderCommentScreen("다른 댓글도 읽어 보세요", settings.parentComments || [],
+      renderCommentScreen("다른 댓글도 읽어 보세요", getCommentSet(settings, 2),
         "이번에는 다른 댓글들을 읽고 생각이 달라지는지 살펴보세요.");
       break;
     case 9: renderVoteScreen("vote3", settings); break;

@@ -1014,3 +1014,98 @@ a {
 .chat-form textarea { width:100%; padding:14px; border:1px solid #d9cfdf; border-radius:13px; resize:vertical; }
 .chat-form-footer { display:flex; align-items:center; justify-content:space-between; gap:14px;
   color:var(--ink-500); font-size:.86rem; }
+
+
+/* 미톡 라이브 v2 추가 기능 */
+.field-group select,
+.reflection-item select {
+  width: 100%;
+  padding: 14px 15px;
+  border: 1px solid #d9cfdf;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--ink-900);
+}
+
+.student-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  min-height: 48px;
+}
+
+.student-chip {
+  display: inline-flex;
+  padding: 9px 12px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--purple-200);
+  border-radius: 999px;
+  background: var(--purple-50);
+  color: var(--purple-900);
+  font-weight: 800;
+}
+
+.student-chip::before {
+  content: "●";
+  color: var(--success);
+  font-size: 0.7rem;
+}
+
+.empty-admin-state,
+.panel-help {
+  color: var(--ink-500);
+  line-height: 1.6;
+}
+
+.keyword-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.keyword-card {
+  padding: 14px 10px;
+  border-radius: 13px;
+  background: var(--purple-50);
+  text-align: center;
+}
+
+.keyword-card strong {
+  display: block;
+  color: var(--purple-900);
+  font-size: 1.05rem;
+}
+
+.keyword-card span {
+  color: var(--ink-500);
+  font-size: 0.82rem;
+}
+
+.word-cloud {
+  display: flex;
+  min-height: 180px;
+  padding: 20px;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 13px 18px;
+  border-radius: 18px;
+  background: #faf8fc;
+  border: 1px solid var(--line);
+}
+
+.word-cloud-item {
+  display: inline-block;
+  color: var(--purple-900);
+  font-weight: 900;
+  line-height: 1;
+}
+
+@media (max-width: 720px) {
+  .keyword-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

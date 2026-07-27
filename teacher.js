@@ -83,6 +83,7 @@ const parentCommentInputs = [
   ...document.querySelectorAll(".parent-comment-input")
 ];
 const youtubeIdInput = document.getElementById("youtubeIdInput");
+const commentOrderSelect = document.getElementById("commentOrderSelect");
 const saveSettingsButton = document.getElementById("saveSettingsButton");
 
 const activeClassCode = document.getElementById("activeClassCode");
@@ -114,7 +115,12 @@ const reflectionCount = document.getElementById("reflectionCount");
 
 const resultTable = document.getElementById("resultTable");
 const downloadCsvButton = document.getElementById("downloadCsvButton");
+const printReportButton = document.getElementById("printReportButton");
 const resetVotesButton = document.getElementById("resetVotesButton");
+const studentList = document.getElementById("studentList");
+const keywordSummary = document.getElementById("keywordSummary");
+const wordCloud = document.getElementById("wordCloud");
+const analysisMessageCount = document.getElementById("analysisMessageCount");
 const teacherToast = document.getElementById("teacherToast");
 
 let currentClassCode = localStorage.getItem("teacherClassCode") || "";
@@ -212,6 +218,8 @@ async function createNewClass() {
         studentComments: ["", "", "", ""],
         parentComments: ["", "", "", ""],
         youtubeId: "",
+        commentOrder: "studentFirst",
+        resolvedCommentOrder: "studentFirst",
         createdAt: serverTimestamp()
       }
     };
@@ -306,11 +314,19 @@ async function saveSettings() {
     input.value.trim()
   );
 
+  const selectedOrder = commentOrderSelect.value;
+  const resolvedOrder =
+    selectedOrder === "random"
+      ? (Math.random() < 0.5 ? "studentFirst" : "parentFirst")
+      : selectedOrder;
+
   const settingsUpdate = {
     newsTitle: newsTitleInput.value.trim(),
     studentComments,
     parentComments,
-    youtubeId: youtubeIdInput.value.trim()
+    youtubeId: youtubeIdInput.value.trim(),
+    commentOrder: selectedOrder,
+    resolvedCommentOrder: resolvedOrder
   };
 
   saveSettingsButton.disabled = true;
@@ -365,6 +381,8 @@ function fillSettingsForm(settings) {
   if (document.activeElement !== youtubeIdInput) {
     youtubeIdInput.value = settings.youtubeId || "";
   }
+
+  commentOrderSelect.value = settings.commentOrder || "studentFirst";
 }
 
 /* ------------------------------------------------------------
@@ -476,11 +494,105 @@ function renderTeacherDashboard() {
   chatMessageCount.textContent = `${objectSize(currentClassData?.chat)}개`;
 
   downloadCsvButton.disabled = false;
+  printReportButton.disabled = false;
   resetVotesButton.disabled = false;
 
   fillSettingsForm(settings);
+  renderStudentList();
   renderResponseCounts();
   renderResults();
+  renderChatAnalysis();
+}
+
+
+function escapeAdminHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderStudentList() {
+  const students = Object.values(currentClassData?.presence || {})
+    .map((item) => item?.nickname)
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b), "ko"));
+
+  if (!students.length) {
+    studentList.innerHTML =
+      '<p class="empty-admin-state">접속한 학생이 없습니다.</p>';
+    return;
+  }
+
+  studentList.innerHTML = students
+    .map((name) => `<span class="student-chip">${escapeAdminHtml(name)}</span>`)
+    .join("");
+}
+
+function analyzeChatKeywords() {
+  const stopwords = new Set([
+    "그리고", "그러나", "그래서", "하지만", "때문", "생각", "같다", "같아요",
+    "있다", "없다", "한다", "합니다", "했다", "학생", "학부모", "교사",
+    "문제", "가장", "정말", "조금", "너무", "그냥", "저는", "나는", "우리",
+    "뉴스", "댓글", "이유", "것", "수", "더", "잘", "좀", "도", "은", "는",
+    "이", "가", "을", "를", "에", "의", "와", "과", "로", "으로"
+  ]);
+
+  const messages = Object.values(currentClassData?.chat || {});
+  const counts = {};
+
+  messages.forEach((message) => {
+    const words = String(message?.text || "")
+      .replace(/[^\uAC00-\uD7A3a-zA-Z0-9\s]/g, " ")
+      .split(/\s+/)
+      .map((word) => word.trim().toLowerCase())
+      .filter((word) => word.length >= 2 && !stopwords.has(word));
+
+    words.forEach((word) => {
+      counts[word] = (counts[word] || 0) + 1;
+    });
+  });
+
+  return {
+    messageCount: messages.length,
+    keywords: Object.entries(counts)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"))
+      .slice(0, 20)
+  };
+}
+
+function renderChatAnalysis() {
+  const analysis = analyzeChatKeywords();
+  analysisMessageCount.textContent = `${analysis.messageCount}개 분석`;
+
+  if (!analysis.keywords.length) {
+    keywordSummary.innerHTML = "";
+    wordCloud.innerHTML =
+      '<p class="empty-admin-state">채팅이 시작되면 주요어가 표시됩니다.</p>';
+    return;
+  }
+
+  keywordSummary.innerHTML = analysis.keywords.slice(0, 5)
+    .map(([word, count]) => `
+      <div class="keyword-card">
+        <strong>${escapeAdminHtml(word)}</strong>
+        <span>${count}회</span>
+      </div>`)
+    .join("");
+
+  const maxCount = analysis.keywords[0][1];
+  wordCloud.innerHTML = analysis.keywords
+    .map(([word, count]) => {
+      const size = 15 + Math.round((count / maxCount) * 23);
+      const opacity = 0.58 + (count / maxCount) * 0.42;
+      return `<span class="word-cloud-item"
+        style="font-size:${size}px;opacity:${opacity}">
+        ${escapeAdminHtml(word)}
+      </span>`;
+    })
+    .join("");
 }
 
 function renderResponseCounts() {
@@ -733,6 +845,77 @@ function downloadCsv() {
    결과 초기화
    ------------------------------------------------------------ */
 
+
+function printClassReport() {
+  if (!currentClassCode || !currentClassData) return;
+
+  const votes = currentClassData.votes || {};
+  const analysis = analyzeChatKeywords();
+  const settings = currentClassData.settings || {};
+
+  const voteSections = ["vote1", "vote2", "vote3", "final"].map((voteKey) => {
+    const labels = VOTE_LABELS[voteKey];
+    const counts = countByChoice(votes[voteKey], labels);
+    const total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+
+    const rows = labels.map((label) => {
+      const count = counts[label];
+      const percent = total ? Math.round((count / total) * 100) : 0;
+      return `<tr><td>${escapeAdminHtml(label)}</td><td>${count}명</td><td>${percent}%</td></tr>`;
+    }).join("");
+
+    return `
+      <section>
+        <h2>${getVoteDisplayName(voteKey)}</h2>
+        <table><thead><tr><th>선택지</th><th>응답</th><th>비율</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      </section>`;
+  }).join("");
+
+  const keywordText = analysis.keywords.slice(0, 10)
+    .map(([word, count]) => `${escapeAdminHtml(word)}(${count})`)
+    .join(", ") || "채팅 주요어 없음";
+
+  const popup = window.open("", "_blank", "width=900,height=900");
+  if (!popup) {
+    showToast("팝업 차단을 해제한 뒤 다시 시도하세요.");
+    return;
+  }
+
+  popup.document.write(`<!DOCTYPE html>
+  <html lang="ko"><head><meta charset="UTF-8">
+  <title>미톡 라이브 수업 리포트</title>
+  <style>
+    body{font-family:Arial,'Noto Sans KR',sans-serif;color:#241b2f;margin:36px;line-height:1.6}
+    h1{color:#3c1b6e;margin-bottom:4px} h2{margin-top:30px;color:#6d3fc0}
+    .meta{padding:16px;background:#f4effb;border-radius:12px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{border:1px solid #ddd;padding:9px;text-align:left} th{background:#f4effb}
+    .guide{margin-top:30px;padding:18px;border:2px solid #ded0f8;border-radius:12px}
+    @media print{button{display:none} body{margin:15mm}}
+  </style></head><body>
+  <h1>미톡 라이브 수업 결과</h1>
+  <p>${new Date().toLocaleString("ko-KR")}</p>
+  <div class="meta">
+    <strong>학급 코드:</strong> ${escapeAdminHtml(currentClassCode)}<br>
+    <strong>뉴스 제목:</strong> ${escapeAdminHtml(settings.newsTitle || "-")}<br>
+    <strong>현재 접속:</strong> ${objectSize(currentClassData.presence)}명<br>
+    <strong>채팅 의견:</strong> ${analysis.messageCount}개<br>
+    <strong>성찰 제출:</strong> ${objectSize(currentClassData.reflections)}명
+  </div>
+  ${voteSections}
+  <section><h2>채팅 주요어</h2><p>${keywordText}</p></section>
+  <div class="guide">
+    <strong>교육적 안내</strong>
+    <p>이번 활동에서는 댓글이 판단에 미치는 영향을 알아보기 위해 특정 대상을 비판하는 댓글만 의도적으로 골라 보여주었습니다.</p>
+    <p>댓글은 다른 사람의 의견입니다. 뉴스의 전체 내용을 확인한 뒤 자신의 판단을 만들어야 합니다.</p>
+  </div>
+  <p><button onclick="window.print()">인쇄 또는 PDF로 저장</button></p>
+  </body></html>`);
+  popup.document.close();
+  popup.focus();
+}
+
 async function resetVotes() {
   if (!currentClassCode) return;
 
@@ -780,6 +963,7 @@ closeChatButton.addEventListener("click", () => setChatOpen(false));
 clearChatButton.addEventListener("click", clearChat);
 refreshResultsButton.addEventListener("click", renderResults);
 downloadCsvButton.addEventListener("click", downloadCsv);
+printReportButton.addEventListener("click", printClassReport);
 resetVotesButton.addEventListener("click", resetVotes);
 
 classCodeInput.addEventListener("input", () => {

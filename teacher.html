@@ -86,6 +86,16 @@
           </small>
         </div>
 
+        <div class="field-group">
+          <label for="commentOrderSelect">댓글 제시 순서</label>
+          <select id="commentOrderSelect">
+            <option value="studentFirst">첫 번째 묶음 → 두 번째 묶음</option>
+            <option value="parentFirst">두 번째 묶음 → 첫 번째 묶음</option>
+            <option value="random">수업 시작 시 무작위 결정</option>
+          </select>
+          <small>학생 화면에는 비판 대상이 드러나지 않고 ‘댓글 읽기’로만 표시됩니다.</small>
+        </div>
+
         <button id="saveSettingsButton" class="primary-button full-button" type="button">
           수업 자료 저장
         </button>
@@ -158,6 +168,19 @@
       <section class="admin-panel">
         <div class="panel-heading-row">
           <div>
+            <p class="eyebrow">실시간 접속</p>
+            <h2>현재 참여 학생</h2>
+          </div>
+          <span class="privacy-chip">별명만 표시</span>
+        </div>
+        <div id="studentList" class="student-list">
+          <p class="empty-admin-state">접속한 학생이 없습니다.</p>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-heading-row">
+          <div>
             <p class="eyebrow">응답 현황</p>
             <h2>단계별 응답자 수</h2>
           </div>
@@ -210,6 +233,21 @@
         <div id="resultTable" class="result-table"></div>
       </section>
 
+      <section class="admin-panel">
+        <div class="panel-heading-row">
+          <div>
+            <p class="eyebrow">의견 분석</p>
+            <h2>채팅 주요어와 워드클라우드</h2>
+          </div>
+          <span id="analysisMessageCount" class="privacy-chip">0개 분석</span>
+        </div>
+        <p class="panel-help">채팅 문장의 단어 빈도를 브라우저에서 자동 집계합니다. 외부 AI나 유료 API는 사용하지 않습니다.</p>
+        <div id="keywordSummary" class="keyword-summary"></div>
+        <div id="wordCloud" class="word-cloud">
+          <p class="empty-admin-state">채팅이 시작되면 주요어가 표시됩니다.</p>
+        </div>
+      </section>
+
       <section class="admin-panel danger-zone">
         <h2>자료 관리</h2>
         <p>
@@ -218,6 +256,9 @@
         <div class="control-grid">
           <button id="downloadCsvButton" class="secondary-button" type="button" disabled>
             결과 CSV 저장
+          </button>
+          <button id="printReportButton" class="primary-button" type="button" disabled>
+            수업 리포트 PDF 저장
           </button>
           <button id="resetVotesButton" class="danger-button" type="button" disabled>
             투표 결과 초기화
