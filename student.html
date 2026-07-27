@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="댓글에 흔들리는 나의 판단 학생용 화면" />
+  <title>학생 참여 | 댓글에 흔들리는 나의 판단</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="student-page">
+  <header class="student-header">
+    <a class="brand" href="index.html" aria-label="첫 화면으로 이동">
+      <span aria-hidden="true">💬</span>
+      <span>댓글에 흔들리는 나의 판단</span>
+    </a>
+
+    <div id="studentIdentity" class="student-identity hidden">
+      <span id="studentClassCode"></span>
+      <span id="studentNickname"></span>
+    </div>
+  </header>
+
+  <div id="progressArea" class="progress-area hidden">
+    <div class="progress-label-row">
+      <strong id="stepLabel">1단계</strong>
+      <span id="progressText">1 / 13</span>
+    </div>
+    <div class="progress-track" aria-label="활동 진행률">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+  </div>
+
+  <main class="student-main">
+    <!--
+      JavaScript가 현재 교사 단계에 맞는 화면을 이 영역에 넣습니다.
+      학생 화면은 교사가 단계를 바꾸면 Firebase를 통해 즉시 갱신됩니다.
+    -->
+    <section id="studentApp" class="student-card" aria-live="polite">
+      <div class="loading-state">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>활동 화면을 불러오는 중입니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- 결과 비교 단계에서 사용하는 Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script type="module" src="student.js"></script>
+</body>
+</html>
